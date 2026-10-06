@@ -1,0 +1,21 @@
+INTENTION MOBILE V2.3 — APK BUILD
+
+Бу пакет V2.3 мобил кодини ўз ичига олади.
+
+Тавсия этилган Flutter: 3.47.5 stable
+Android minimum SDK: 23
+API: https://www.intentiontest.helioho.st/api/v1/mobile/
+
+WINDOWS:
+1) Flutter 3.47+ ўрнатилган бўлиши керак.
+2) PowerShell:
+   Set-ExecutionPolicy -Scope Process Bypass
+   .\tool\setup_android_windows.ps1
+   flutter build apk --release --dart-define="APP_NAME=Intention School V2.3"
+3) APK:
+   build\app\outputs\flutter-apk\app-release.apk
+
+GITHUB ACTIONS:
+Репозиторийга шу папка мазмунини қўйинг. .github/workflows/build-apk.yml автоматик APK чиқаради.
+Actions -> Build Intention Mobile V2.3 APK -> Run workflow.
+Натижа: Intention-Mobile-V2.3-APK artifact.

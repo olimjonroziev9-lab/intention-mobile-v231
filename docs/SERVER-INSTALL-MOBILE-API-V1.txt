@@ -1,0 +1,52 @@
+INTENTION TEST — MOBILE API V1
+==============================
+
+This package adds a native-app API without changing the existing web login/session flow.
+
+BASE URL
+--------
+https://www.intentiontest.helioho.st/api/v1/mobile/
+
+FIRST INSTALL
+-------------
+1) Upload/overwrite the code files from this patch into httpdocs.
+2) Import database/mobile-api-v1-upgrade.sql into the CURRENT database once.
+   It only creates mobile_api_tokens. Existing data is not deleted.
+3) Open:
+   https://www.intentiontest.helioho.st/api/v1/mobile/health
+   Expected JSON contains: "ok": true
+4) Test auth/login from the future mobile app or an API client using JSON.
+
+SECURITY
+--------
+- Mobile login returns a Bearer token valid for 30 days.
+- The raw token is never stored in MySQL; only SHA-256 hash is stored.
+- API requests do not use PHP session or CSRF. They use Authorization: Bearer.
+- Existing browser forms still use PHP session + CSRF exactly as before.
+- No wildcard CORS is enabled.
+
+MAIN MOBILE FLOWS
+-----------------
+Student:
+- tests, attempt start/view/answer/finish, results
+- Telegram link/unlink
+
+Assistant:
+- assigned classes
+- daily attendance list/save
+- daily statistics
+- Telegram attendance report
+
+Teacher:
+- assigned class/subject pairs
+- assistant attendance visibility
+- independent teacher lesson attendance
+- grades and journal history
+
+Full endpoint examples:
+api/v1/MOBILE-README.md
+
+IMPORTANT
+---------
+Do not put Bot Token, MySQL password, or other secrets into the mobile app.
+The mobile app talks only to this HTTPS API.

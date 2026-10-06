@@ -1,0 +1,24 @@
+import 'package:flutter/material.dart';
+import 'common.dart';
+import 'session.dart';
+
+class ParentChildrenScreen extends StatefulWidget {
+  const ParentChildrenScreen({super.key});
+  @override
+  State<ParentChildrenScreen> createState()=>_ParentChildrenScreenState();
+}
+class _ParentChildrenScreenState extends State<ParentChildrenScreen>{
+  Future<List<Map<String,dynamic>>>? _future;
+  @override void didChangeDependencies(){super.didChangeDependencies();_future??=_load();}
+  Future<List<Map<String,dynamic>>> _load() async {final d=Map<String,dynamic>.from(await SessionScope.of(context).api.get('parent/children') as Map);return (d['children'] as List? ?? const []).map((x)=>Map<String,dynamic>.from(x as Map)).toList();}
+  void _reload()=>setState(()=>_future=_load());
+  @override Widget build(BuildContext context)=>FutureBuilder<List<Map<String,dynamic>>>(future:_future,builder:(context,snap){if(snap.connectionState!=ConnectionState.done)return const LoadingView();if(snap.hasError)return ErrorView(message:'${snap.error}',onRetry:_reload);final rows=snap.data??const[];return RefreshIndicator(onRefresh:()async{_reload();await _future;},child:ListView(padding:const EdgeInsets.all(12),children:[if(rows.isEmpty)const Card(child:Padding(padding:EdgeInsets.all(18),child:Text('Админ ҳали фарзандни сизга бириктирмаган.'))),...rows.map((c)=>Card(child:ListTile(leading:const CircleAvatar(child:Icon(Icons.person)),title:Text(asText(c['full_name'])),subtitle:Text('${asText(c['class_name'])} · ${asText(c['relation_label'],'Ота-она')}'),trailing:const Icon(Icons.chevron_right),onTap:()=>Navigator.of(context).push(MaterialPageRoute(builder:(_)=>ParentChildDataScreen(child:c)))))]));});
+}
+class ParentChildDataScreen extends StatefulWidget{const ParentChildDataScreen({super.key,required this.child});final Map<String,dynamic> child;@override State<ParentChildDataScreen> createState()=>_ParentChildDataScreenState();}
+class _ParentChildDataScreenState extends State<ParentChildDataScreen>{
+  String _period='monthly';DateTime _date=DateTime.now();Future<Map<String,dynamic>>? _future;
+  @override void initState(){super.initState();_future=_load();}
+  String get _dateText=>'${_date.year.toString().padLeft(4,'0')}-${_date.month.toString().padLeft(2,'0')}-${_date.day.toString().padLeft(2,'0')}';
+  Future<Map<String,dynamic>> _load() async=>Map<String,dynamic>.from(await SessionScope.of(context).api.get('parent/child-data',query:{'student_id':asInt(widget.child['id']),'period':_period,'date':_dateText}) as Map);
+  @override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:Text(asText(widget.child['full_name']))),body:Column(children:[Padding(padding:const EdgeInsets.all(12),child:Row(children:[Expanded(child:DropdownButtonFormField<String>(value:_period,decoration:const InputDecoration(labelText:'Давр'),items:const[DropdownMenuItem(value:'daily',child:Text('Кунлик')),DropdownMenuItem(value:'weekly',child:Text('Ҳафталик')),DropdownMenuItem(value:'monthly',child:Text('Ойлик'))],onChanged:(v){if(v!=null)setState((){_period=v;_future=_load();});})),IconButton(icon:const Icon(Icons.calendar_month),onPressed:()async{final d=await showDatePicker(context:context,initialDate:_date,firstDate:DateTime(2020),lastDate:DateTime.now());if(d!=null)setState((){_date=d;_future=_load();});})])),Expanded(child:FutureBuilder<Map<String,dynamic>>(future:_future,builder:(context,snap){if(snap.connectionState!=ConnectionState.done)return const LoadingView();if(snap.hasError)return ErrorView(message:'${snap.error}',onRetry:()=>setState(()=>_future=_load()));final d=snap.data!;final rows=(d['attendance'] as List? ?? const []).map((x)=>Map<String,dynamic>.from(x as Map)).toList();final tests=(d['tests'] as List? ?? const []).map((x)=>Map<String,dynamic>.from(x as Map)).toList();return ListView(padding:const EdgeInsets.all(12),children:[Text('${asText(d['from'])} — ${asText(d['to'])}',style:Theme.of(context).textTheme.titleMedium),const SizedBox(height:8),Text('Баҳо ва давомат',style:Theme.of(context).textTheme.titleLarge),if(rows.isEmpty)const Card(child:Padding(padding:EdgeInsets.all(16),child:Text('Маълумот йўқ.'))),...rows.map((r)=>Card(child:ListTile(leading:CircleAvatar(child:Text(asText(r['grade_5'],'—'))),title:Text(asText(r['subject_name'])),subtitle:Text('${asText(r['journal_date'])} · ${asInt(r['period_no'])}-дарс · ${asText(r['attendance_status'])}\n${asText(r['grade_display'],'—')}${asText(r['parent_note']).isEmpty?'':'\n${asText(r['parent_note'])}'}'),isThreeLine:true))),const SizedBox(height:12),Text('Тест натижалари',style:Theme.of(context).textTheme.titleLarge),...tests.map((r)=>Card(child:ListTile(title:Text(asText(r['title'])),subtitle:Text('${asText(r['subject_name'])} · ${asText(r['grade_display'],'—')}'),trailing:Text('${asText(r['score'])}/${asText(r['max_score'])}')))])}))]));
+}
